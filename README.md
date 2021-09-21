@@ -45,4 +45,4 @@ Arduino sketch only lightly modified example from MCCI aruduino_lmic repository 
 * ThingPulse OLED SSD1306 ESP32 library (https://github.com/ThingPulse/esp8266-oled-ssd1306)
 
 ### Looking further out
-Longer-range plan - simple env monitors in multiple places in my apartment (maybe axe the barometric pressure in most, or instead axe the SHT31 and use only BME280.  Possibly in place of BME280 in at least one BME680 to add IAQ estimate.  One indoor monitor will add CO<sub>2</sub> using IR or other single-gas sensor.  The outdoor weather station monitor will eventually add particle counts and maybe CO<sub>2</sub> to the SHT31/BME280 pair.
+Longer-range plan - simple env monitors in multiple places in my apartment - maybe axe the barometric pressure in most as unnecessary, or instead axe the SHT31 and use only BME280 if I can get consistent calibration with some reference.  Possibly in place of BME280 in at least one monitor, use BME680 to add IAQ estimate.  One indoor monitor will add CO<sub>2</sub> using IR or other single-gas sensor.  The outdoor weather station monitor will eventually add particle counts and maybe CO<sub>2</sub> to the SHT31/BME280 pair.
