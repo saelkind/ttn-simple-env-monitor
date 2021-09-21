@@ -30,9 +30,9 @@ Arduino sketch only lightly modified example from MCCI aruduino_lmic repository 
   
 * **ttn-simple-env-monitor** - *(not started yet)* Transmit SHT31 and BME280 periodic stats to TTN server.  
 
- Plan is (min, max, avg, flag) for each period for &deg;C, RH%, and barometic pressure (hPa).  BME280 temp &
- humidity will be used solely as sanity check on SHT31 temp & humidity.  Flag field will flag if the delta(s)
- exceed some threshold - or may replace with a pair of period max observed delta fields.
+  Plan is (min, max, avg, flag) for each period for &deg;C, RH%, and barometic pressure (hPa).  BME280 temp &
+  humidity will be used solely as sanity check on SHT31 temp & humidity.  Flag field will flag if the delta(s)
+  exceed some threshold - or may replace with a pair of period max observed delta fields.
 
 
 ### Dependencies
