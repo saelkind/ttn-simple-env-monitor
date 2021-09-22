@@ -44,7 +44,7 @@ At this time,  still leaving in *some* cruft (excessive Serial.print(), discarde
   
   * **TODO** - Clean up code.
 
-* **ttn-sht31** - Transmit SHT31 periodic stats to TTN server.  
+* **ttn-sht31** - *(Not started yet)*  Transmit SHT31 periodic stats to TTN server.  
 
   Move temperature and humidity sampling to main loop(), then send aggregate stats during *doSend()*.
   Stats to be sent are (min, max, last) for each transmission cycle for &deg;C and RH%.  Do my own
