@@ -25,8 +25,8 @@ At this time,  still leaving in *some* cruft (excessive Serial.print(), discarde
 * **ttn-sht31-nono** - (Quick hit step) Transmit SHT31 periodic stats to TTN server.  Still sending a 
   string (hence "nono").
 
-  Quick hit to a new step, based on ttn-otaa-hello.  Takes one reading of temp & humidity during 
-  *doSend()*, uses *dtostrf()* and *sprintf()* to print floars to a formatted string (char array),
+  Quick hit to a new step, based on *ttn-otaa-hello*.  Takes one reading of temp & humidity during 
+  *doSend()*, uses *dtostrf()* and *sprintf()* to print floats to a formatted string (char array),
   in place of the *Hello, world!* message, leverages same payload decoder to view on console.  Also
   adds simple display of the same string on the built-in OLED.  Being impatient, I lowered
   the transmission delay time, so it probably violates the TTN fair use policy.  Either don't 
@@ -54,12 +54,12 @@ At this time,  still leaving in *some* cruft (excessive Serial.print(), discarde
   In addition to doing the data conversion and new payload formatter on the TTN side
   
   * **TODO** TBD if will do deeper research on sensor calibration, when and how to use heater, etc.
-  (maybe later release?).  I've been observing variations in readings between sensors, in excess of
-  spec'd accuracy - especially between SHT31 and BME280 - so figuring out how to calibrate without
-  expensive equipment will be a must.  Consistent values from each sensor is not the issue, it's just
-  the difference between sensors is more than the sum of the spec'd tolerances.  I don't know if it's
-  the generic breakout boards, or if there's something going on that I should expect even from those 
-  of known quality.
+  (maybe later release?).  I've been observing variations in readings between sensors, 
+  so figuring out how to calibrate without expensive equipment will be a must.  Consistent
+  values from each sensor is not the issue, it's just the difference between sensors -
+  especially between SHT31 and BME280 - is more than the sum of the spec'd tolerances.  I don't
+  know if it's the generic breakout boards, or if there's something going on that I should expect
+  expect even from those of known quality.
   
 * **ttn-simple-env-monitor** - *(not started yet)* Transmit SHT31 and BME280 periodic stats to TTN server.  
 
