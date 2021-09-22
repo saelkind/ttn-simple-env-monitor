@@ -34,6 +34,9 @@
 #include <lmic.h>
 #include <hal/hal.h>
 #include <SPI.h>
+#include <Wire.h>
+#include <SSD1306.h>
+#include <SHT31.h>
 
 //
 // For normal use, we require that you edit the sketch to replace FILLMEIN
@@ -48,6 +51,15 @@
 # warning "You must replace the values marked FILLMEIN with real values from the TTN control panel!"
 # define FILLMEIN (#dont edit this, edit the lines that use FILLMEIN)
 #endif
+
+#define OLED_SDA    4
+#define OLED_SCL    15
+#define OLED_RST    16
+
+#define SHT31_ADDRESS   0x44
+SHT31 sht;
+
+
 
 // This EUI must be in little-endian format, so least-significant-byte
 // first. When copying an EUI from ttnctl output, this means to reverse
@@ -66,12 +78,19 @@ void os_getDevEui (u1_t* buf) { memcpy_P(buf, DEVEUI, 8);}
 static const u1_t PROGMEM APPKEY[16] = { 0xC8, 0x2F, 0x21, 0x8B, 0x27, 0x59, 0x17, 0x40, 0xBC, 0x66, 0x2E, 0x1B, 0xA0, 0x58, 0x8F, 0x85 };    // was fillmein
 void os_getDevKey (u1_t* buf) {  memcpy_P(buf, APPKEY, 16);}
 
-static uint8_t mydata[] = "Hello, world!";
+//static uint8_t mydata[] = "Hello, world!";
 static osjob_t sendjob;
+
+SSD1306 display(0x3c, OLED_SDA, OLED_SCL);
+
+struct EnvSample {
+  float tempC;
+  float rhPerc;
+};
 
 // Schedule TX every this many seconds (might become longer due to duty
 // cycle limitations).
-const unsigned TX_INTERVAL = 300;
+const unsigned TX_INTERVAL = 180;
 
 // Pin mapping
 // redone for TTGO ESP32 LoRa 915  MHz v1.0
@@ -215,16 +234,130 @@ void do_send(osjob_t* j){
     if (LMIC.opmode & OP_TXRXPEND) {
         Serial.println(F("OP_TXRXPEND, not sending"));
     } else {
+        struct EnvSample envSample = readEnvData();
+        Serial.print(envSample.tempC, 2);
+        Serial.print(", ");
+        Serial.println(envSample.rhPerc);
+        union msg {
+           uint8_t uints[40];
+           char envDataStr[40];
+        } message;
+        char tempStr[10];
+        dtostrf(envSample.tempC, 5, 1, tempStr);
+        char rhStr[10];
+        dtostrf(envSample.rhPerc, 5, 1, rhStr);
+        sprintf(message.envDataStr, "T: %s, RH: %s", tempStr, rhStr);
+        display.clear();
+        display.setFont(ArialMT_Plain_10);
+        display.setTextAlignment(TEXT_ALIGN_CENTER);
+        display.drawString(display.getWidth() / 2, 32, message.envDataStr);
+        display.display();
+            
+        
         // Prepare upstream data transmission at the next possible time.
-        LMIC_setTxData2(1, mydata, sizeof(mydata)-1, 0);
+        LMIC_setTxData2(1, message.uints, strlen(message.envDataStr), 0);
         Serial.println(F("Packet queued"));
     }
     // Next TX is scheduled after TX_COMPLETE event.
 }
 
+void scanI2C() {
+  byte error, address;
+  int nDevices;
+  Serial.println(F("Scanning for I2C devices..."));
+
+  nDevices = 0;
+  for (address = 0; address <= 127; address++ )
+  {
+    // The i2c_scanner uses the return value of
+    // the Write.endTransmisstion to see if
+    // a device did acknowledge to the address.
+    //Line below is incorect. Wire lib assumes address is right-shifted
+    //use as read and write. This sketch does that and so reports
+    // the proper address
+    /// ACTUALLY THE SHIFTING IS INCORRECT, AT LEAST FOR Feather M0!!!!
+    //Wire.beginTransmission(address>>1);
+    Wire.beginTransmission(address);
+    error = Wire.endTransmission();
+
+    if (error == 0)
+    {
+      Serial.print(F("I2C device found at address 0x"));
+      if (address < 16)
+        Serial.print(F("0"));
+      Serial.print(address, HEX);
+      if (address == 0) {
+        Serial.print(F(" (I2C broadcast address some slaves implement and respond to)"));
+      }
+      Serial.println();
+
+      nDevices++;
+    }
+    else if (error == 4)
+    {
+      Serial.print(F("'Other' error at address 0x"));
+      if (address < 16)
+        Serial.print(F("0"));
+      Serial.println(address, HEX);
+    }
+  }
+  if (nDevices == 0)
+    Serial.println(F("No I2C devices found\n"));
+  else
+    Serial.println(F("done\n"));
+}
+
+struct EnvSample readEnvData() {
+  struct EnvSample sample;
+  sample.rhPerc = -999.0;
+  sample.tempC = -999.0;
+
+ // read Temp & RH from SHT31
+  Serial.println(F("-> readSht31"));
+  if (sht.read(false)) {                      // default = true/fast       slow = false
+    Serial.println(F("-> read values readSht31"));
+    sample.rhPerc = sht.getHumidity();
+    sample.tempC = sht.getTemperature();
+    Serial.println(F("<- readSht31"));
+  } else {
+    Serial.print(F("Error in read()\n"));
+  }
+  return sample;
+}
+
+
 void setup() {
+
+    //Wire.begin([SDA [,SCL]]);
+    Wire.begin(4, 15);
     Serial.begin(115200);
     Serial.println(F("Starting"));
+
+    
+    sht.begin(SHT31_ADDRESS);
+
+    // Configure OLED by setting the OLED Reset HIGH, LOW, and then back HIGH
+    pinMode(OLED_RST, OUTPUT);
+    digitalWrite(OLED_RST, HIGH);
+    delay(100);
+    digitalWrite(OLED_RST, LOW);
+    delay(100);
+    digitalWrite(OLED_RST, HIGH);
+
+    display.init();
+    display.flipScreenVertically();
+
+    display.clear();
+    display.setFont(ArialMT_Plain_16);
+    display.setTextAlignment(TEXT_ALIGN_CENTER);
+    display.drawString(display.getWidth() / 2, 22, "LoRaWAN");
+    //display.setFont(ArialMT_Plain_10);
+    display.drawString(display.getWidth() / 2, 42, "T/RH Monitor");
+    display.display();
+    delay(5000);
+  
+
+    scanI2C();
 
     #ifdef VCC_ENABLE
     // For Pinoccio Scout boards
@@ -243,5 +376,13 @@ void setup() {
 }
 
 void loop() {
-    os_runloop_once();
+  //unsigned long startMillis;
+  //startMillis = millis();
+  os_runloop_once();
+/*  struct EnvSample envSample = readEnvData();
+  Serial.print(envSample.tempC, 2);
+  Serial.print(", ");
+  Serial.println(envSample.rhPerc);
+  startMillis = millis() - startMillis;
+  Serial.println(startMillis); */
 }
