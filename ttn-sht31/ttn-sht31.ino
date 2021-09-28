@@ -129,34 +129,6 @@ static union msg message;
 // cycle limitations).
 const unsigned TX_INTERVAL = 180;
 
-/*static char PROGMEM EV_STR_NONE[] = "No event";
-static char PROGMEM EV_STR_OTHER[] = "Other";
-static char PROGMEM EV_STR_UNKNOWN[] = "Unknown";
-static char PROGMEM EV_STR_JOINING[] = "Joining";
-static char PROGMEM EV_STR_JOINED[] = "Joined";
-static char PROGMEM EV_STR_JOIN_FAILED[] = "Join Fail";
-static char PROGMEM EV_STR_REJOIN_FAILED[] = "Rejoin Fail";
-static char PROGMEM EV_STR_TXCOMPLETE[] = "TX Complete";
-static char PROGMEM EV_STR_LOST_TSYNC[] = "Lost Tsync";
-static char PROGMEM EV_STR_RESET[] = "Reset";
-static char PROGMEM EV_STR_RXCOMPLETE[] = "RX Complete";
-static char PROGMEM EV_STR_TXCANCELED[] = "TX Start";
-static char PROGMEM EV_STR_RXSTART[] = "RX Start";
-static char PROGMEM EV_STR_TXSTART[] = "TX Start";
-static char PROGMEM EV_STR_JOIN_TXCOMPLETE[] = "Join TX Complete";
-static char* EV_STR_SCAN_TIMEOUT =  EV_STR_OTHER;
-static char* EV_STR_BEACON_FOUND = EV_STR_OTHER;
-static char* EV_STR_BEACON_MISSED =  EV_STR_OTHER;
-static char* EV_STR_BEACON_TRACKED =  EV_STR_OTHER;
-static char* EV_STR_LINK_DEAD =  EV_STR_OTHER;
-static char* EV_STR_LINK_ALIVE =  EV_STR_OTHER;
-//static char PROGMEM EV_STR_SCAN_TIMEOUT[] = "Scan Timeout";
-//static char PROGMEM EV_STR_BEACON_FOUND[] = "Bcn Found";
-//static char PROGMEM EV_STR_BEACON_MISSED[] = "Bcn Missed";
-//static char PROGMEM EV_STR_BEACON_TRACKED[] = "Bcn Tracked";
-//static char PROGMEM EV_STR_LINK_DEAD[] = "Link Dead";
-//static char PROGMEM EV_STR_LINK_ALIVE[] = "Link Alive";
-char* lastEventStr = EV_STR_NONE;*/
 
 // Pin mapping
 // redone for TTGO ESP32 LoRa 915  MHz v1.0
@@ -188,9 +160,6 @@ void updateDisplay() {
     display.setFont(ArialMT_Plain_10);
     display.setTextAlignment(TEXT_ALIGN_CENTER);
     display.drawString(display.getWidth() / 2, 20, message.envDataStr);
-    /*display.setTextAlignment(TEXT_ALIGN_LEFT);
-    display.drawString(4, 46, F("Last Event:"));
-    display.drawString(58, 46, lastEventStr);*/
     display.display();
 }
 
@@ -200,27 +169,21 @@ void onEvent (ev_t ev) {
     switch(ev) {
         case EV_SCAN_TIMEOUT:
             Serial.println(F("EV_SCAN_TIMEOUT"));
-            //lastEventStr = EV_STR_SCAN_TIMEOUT;
             break;
         case EV_BEACON_FOUND:
             Serial.println(F("EV_BEACON_FOUND"));
-            //lastEventStr = EV_STR_BEACON_FOUND;
             break;
         case EV_BEACON_MISSED:
             Serial.println(F("EV_BEACON_MISSED"));
-            //lastEventStr = EV_STR_BEACON_MISSED;
             break;
         case EV_BEACON_TRACKED:
             Serial.println(F("EV_BEACON_TRACKED"));
-            //lastEventStr = EV_STR_BEACON_TRACKED;
             break;
         case EV_JOINING:
             Serial.println(F("EV_JOINING"));
-            //lastEventStr = EV_STR_JOINING;
             break;
         case EV_JOINED:
             Serial.println(F("EV_JOINED"));
-            //lastEventStr = EV_STR_JOINED;
             {
               u4_t netid = 0;
               devaddr_t devaddr = 0;
@@ -261,15 +224,12 @@ void onEvent (ev_t ev) {
         */
         case EV_JOIN_FAILED:
             Serial.println(F("EV_JOIN_FAILED"));
-            //lastEventStr = EV_STR_JOIN_FAILED;
             break;
         case EV_REJOIN_FAILED:
             Serial.println(F("EV_REJOIN_FAILED"));
-            //lastEventStr = EV_STR_REJOIN_FAILED;
             break;
         case EV_TXCOMPLETE:
             Serial.println(F("EV_TXCOMPLETE (includes waiting for RX windows)"));
-            //lastEventStr = EV_STR_TXCOMPLETE;
             if (LMIC.txrxFlags & TXRX_ACK)
               Serial.println(F("Received ack"));
             if (LMIC.dataLen) {
@@ -282,24 +242,19 @@ void onEvent (ev_t ev) {
             break;
         case EV_LOST_TSYNC:
             Serial.println(F("EV_LOST_TSYNC"));
-            //lastEventStr = EV_STR_LOST_TSYNC;
             break;
         case EV_RESET:
             Serial.println(F("EV_RESET"));
-            //lastEventStr = EV_STR_RESET;
             break;
         case EV_RXCOMPLETE:
             // data received in ping slot
             Serial.println(F("EV_RXCOMPLETE"));
-            //lastEventStr = EV_STR_RXCOMPLETE;
             break;
         case EV_LINK_DEAD:
             Serial.println(F("EV_LINK_DEAD"));
-            //lastEventStr = EV_STR_LINK_DEAD;
             break;
         case EV_LINK_ALIVE:
             Serial.println(F("EV_LINK_ALIVE"));
-            //lastEventStr = EV_STR_LINK_ALIVE;
             break;
         /*
         || This event is defined but not used in the code. No
@@ -311,28 +266,22 @@ void onEvent (ev_t ev) {
         */
         case EV_TXSTART:
             Serial.println(F("EV_TXSTART"));
-            //lastEventStr = EV_STR_TXSTART;
             break;
         case EV_TXCANCELED:
             Serial.println(F("EV_TXCANCELED"));
-            //lastEventStr = EV_STR_TXCANCELED;
             break;
         case EV_RXSTART:
             /* do not print anything -- it wrecks timing */
-            //lastEventStr = EV_STR_RXSTART;
             break;
         case EV_JOIN_TXCOMPLETE:
             Serial.println(F("EV_JOIN_TXCOMPLETE: no JoinAccept"));
-            //lastEventStr = EV_STR_TXCOMPLETE;
             break;
 
         default:
             Serial.print(F("Unknown event: "));
             Serial.println((unsigned) ev);
-            //lastEventStr = EV_STR_UNKNOWN;
             break;
     }
-    updateDisplay();
 }
 
 void do_send(osjob_t* j){
