@@ -1,3 +1,4 @@
+
 /*******************************************************************************
  * Copyright (c) 2015 Thomas Telkamp and Matthijs Kooijman
  * Copyright (c) 2018 Terry Moore, MCCI
@@ -37,6 +38,8 @@
 #include <Wire.h>
 #include <SSD1306.h>
 #include <SHT31.h>
+
+#include "littleEndianNetworkByteOrderUtils.c"
 
 //
 // For normal use, we require that you edit the sketch to replace FILLMEIN
@@ -120,8 +123,12 @@ struct EnvSample {
 static struct EnvSample envSample;
 
 union msg {
-   uint8_t uints[40];
-   char envDataStr[40];
+  struct intEnvData {
+    short tempC;
+    short rhPerc;
+    short pressHPa;
+  } periodIntEnvData;
+  uint8_t uints[sizeof(intEnvData)];
 };
 static union msg message;
 
@@ -147,19 +154,33 @@ void printHex2(unsigned v) {
 }
 
 
+short shortifyReading(float reading) {
+  // convert an environment data reading from float to a short, first rounding to one decimal point,
+  // then multiplying by 10 to encode that value for transmission (saves two bytes in the payload)
+  // Do the conversion naively for now.
+
+  long reading_l = (long)((reading + 0.05f) * 10.0f);  //for rounding
+  return (short)reading_l;
+}
+
 void formPacketBody() {
-    char tempStr[10];
-    dtostrf(envSample.tempC, 5, 1, tempStr);
-    char rhStr[10];
-    dtostrf(envSample.rhPerc, 5, 1, rhStr);
-    sprintf(message.envDataStr, "T: %s, RH: %s", tempStr, rhStr);
+    message.periodIntEnvData.tempC = htons_le(shortifyReading(envSample.tempC));
+    message.periodIntEnvData.rhPerc = htons_le(shortifyReading(envSample.rhPerc));
+    // temporary until add BME280 in.
+    message.periodIntEnvData.pressHPa = htons_le(shortifyReading(-999.0));
 }
 
 void updateDisplay() {
     display.clear();
     display.setFont(ArialMT_Plain_10);
     display.setTextAlignment(TEXT_ALIGN_CENTER);
-    display.drawString(display.getWidth() / 2, 20, message.envDataStr);
+    char envDataStr[40];
+    char tempStr[10];
+    dtostrf(envSample.tempC, 5, 1, tempStr);
+    char rhStr[10];
+    dtostrf(envSample.rhPerc, 5, 1, rhStr);
+    sprintf(envDataStr, "T: %s, RH: %s%%", tempStr, rhStr);
+    display.drawString(display.getWidth() / 2, 20, envDataStr);
     display.display();
 }
 
@@ -297,7 +318,7 @@ void do_send(osjob_t* j){
         updateDisplay();
 
         // Prepare upstream data transmission at the next possible time.
-        LMIC_setTxData2(1, message.uints, strlen(message.envDataStr), 0);
+        LMIC_setTxData2(1, message.uints, sizeof(message), 0);
         Serial.println(F("Packet queued"));
     }
     // Next TX is scheduled after TX_COMPLETE event.
